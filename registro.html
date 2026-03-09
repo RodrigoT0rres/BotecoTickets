@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Pedidos</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --border: #2e2e3e;
+    --accent: #f0c040;
+    --accent2: #e05c5c;
+    --green: #4ecb8d;
+    --blue: #5b8dee;
+    --text: #f0eff8;
+    --muted: #7a7a9a;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Montserrat', sans-serif;
+    min-height: 100vh;
+    padding: 32px 16px;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  header p {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .badge {
+    margin-left: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Montserrat', monospace;
+    white-space: nowrap;
+  }
+
+  .badge span {
+    color: var(--green);
+    font-weight: 500;
+  }
+
+  /* FORM CARD */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 28px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .form-card h2 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-card h2::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* TOP ROW */
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  /* FIELDS GRID */
+  .fields-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Montserrat', monospace;
+    font-size: 14px;
+    padding: 11px 14px;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  input[type="date"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(240, 192, 64, 0.12);
+  }
+
+  input[type="number"] {
+    text-align: right;
+  }
+
+  /* Tag chips for payment methods */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    margin-bottom: 4px;
+  }
+
+  .chip-visa-deb  { background: rgba(91,141,238,0.15); color: #5b8dee; border: 1px solid rgba(91,141,238,0.3); }
+  .chip-visa-cred { background: rgba(91,141,238,0.25); color: #8ab0f5; border: 1px solid rgba(91,141,238,0.4); }
+  .chip-master-deb  { background: rgba(224,92,92,0.15); color: #e05c5c; border: 1px solid rgba(224,92,92,0.3); }
+  .chip-master-cred { background: rgba(224,92,92,0.25); color: #f08080; border: 1px solid rgba(224,92,92,0.4); }
+  .chip-ticket { background: rgba(168,120,240,0.15); color: #b07af0; border: 1px solid rgba(168,120,240,0.3); }
+  .chip-pix    { background: rgba(78,203,141,0.15); color: var(--green); border: 1px solid rgba(78,203,141,0.3); }
+  .chip-dinheiro { background: rgba(240,192,64,0.15); color: var(--accent); border: 1px solid rgba(240,192,64,0.3); }
+
+  /* TOTAL PREVIEW */
+  .total-preview {
+    margin-top: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .total-preview .label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .total-preview .value {
+    font-family: 'Montserrat', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  /* REGISTER BUTTON */
+  .btn-register {
+    margin-top: 20px;
+    width: 100%;
+    background: var(--accent);
+    color: #0f0f13;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 15px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-register:hover {
+    background: #ffd060;
+    box-shadow: 0 4px 24px rgba(240,192,64,0.3);
+    transform: translateY(-1px);
+  }
+
+  .btn-register:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  /* HISTORY */
+  .history-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  .history-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .history-header h2 {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+  }
+
+  .count-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: 'Montserrat', monospace;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: var(--text);
+  }
+
+  .btn-clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-clear:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  thead th:last-child { text-align: right; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+  tbody td {
+    padding: 11px 14px;
+    font-family: 'Montserrat', monospace;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  tbody td.pedido-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .val-cell {
+    text-align: right;
+    color: var(--muted);
+  }
+
+  .val-cell.has-value {
+    color: var(--text);
+  }
+
+  .total-cell {
+    text-align: right;
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    padding: 56px 24px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* FLASH ANIMATION for new row */
+  @keyframes rowFlash {
+    0%   { background: rgba(240,192,64,0.18); }
+    100% { background: transparent; }
+  }
+
+  .row-new {
+    animation: rowFlash 1.2s ease forwards;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--green);
+    color: #0f0f13;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 12px 22px;
+    border-radius: 10px;
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* FOOTER TOTAL ROW */
+  .footer-total {
+    background: var(--surface2);
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+
+  .footer-total .label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .footer-total .grand {
+    font-family: 'Montserrat', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--green);
+  }
+
+  @media (max-width: 580px) {
+    .top-row { grid-template-columns: 1fr; }
+    header { flex-wrap: wrap; }
+    .badge { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-icon">🧾</div>
+    <div>
+      <h1>Registro de Pedidos</h1>
+      <p>Controle de recebimentos por forma de pagamento</p>
+    </div>
+    <div class="badge" id="dateBadge">Data: <span id="todayDate">—</span></div>
+  </header>
+
+  <!-- FORM -->
+  <div class="form-card">
+    <h2>Novo Registro</h2>
+
+    <div class="top-row">
+      <div class="field">
+        <label>Identificação / Pedido</label>
+        <input type="text" id="pedidoNome" placeholder="Ex: Turno Manhã, Pedido #42…">
+      </div>
+      <div class="field">
+        <label>Data do Registro</label>
+        <input type="date" id="pedidoData">
+      </div>
+    </div>
+
+    <div class="fields-grid">
+
+      <div class="field">
+        <span class="chip chip-visa-deb">💳 Visa Débito</span>
+        <input type="number" id="visaDeb" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="field">
+        <span class="chip chip-visa-cred">💳 Visa Crédito</span>
+        <input type="number" id="visaCred" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="field">
+        <span class="chip chip-master-deb">💳 Master Débito</span>
+        <input type="number" id="masterDeb" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="field">
+        <span class="chip chip-master-cred">💳 Master Crédito</span>
+        <input type="number" id="masterCred" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="field">
+        <span class="chip chip-ticket">🎟 Ticket</span>
+        <input type="number" id="ticket" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="field">
+        <span class="chip chip-pix">⚡ PIX</span>
+        <input type="number" id="pix" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+      <div class="field">
+        <span class="chip chip-dinheiro">💵 Dinheiro</span>
+        <input type="number" id="dinheiro" placeholder="0,00" min="0" step="0.01">
+      </div>
+
+    </div>
+
+    <!-- TOTAL PREVIEW -->
+    <div class="total-preview">
+      <span class="label">Total do registro</span>
+      <span class="value" id="totalPreview">R$ 0,00</span>
+    </div>
+
+    <button class="btn-register" onclick="registrarPedido()">
+      ➕ Registrar no Histórico
+    </button>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-card">
+    <div class="history-header">
+      <h2>Histórico de Registros</h2>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span class="count-badge" id="countBadge">0 registros</span>
+        <button class="btn-clear" onclick="limparHistorico()">Limpar</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Identificação</th>
+            <th>Data</th>
+            <th>Visa Déb</th>
+            <th>Visa Créd</th>
+            <th>Master Déb</th>
+            <th>Master Créd</th>
+            <th>Ticket</th>
+            <th>PIX</th>
+            <th>Dinheiro</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="histBody">
+          <!-- rows injected here -->
+        </tbody>
+      </table>
+    </div>
+
+    <div id="emptyState" class="empty-state">
+      <div class="icon">📋</div>
+      <p>Nenhum registro ainda. Preencha o formulário e clique em <strong>Registrar</strong>.</p>
+    </div>
+
+    <div class="footer-total" id="footerTotal" style="display:none;">
+      <span class="label">Total Geral Acumulado</span>
+      <span class="grand" id="grandTotal">R$ 0,00</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Registro adicionado!</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDjhU-yP9eGcmEAqS3EwbV5gf871O35czw",
+    authDomain: "registro-tickets-d9a1d.firebaseapp.com",
+    projectId: "registro-tickets-d9a1d",
+    storageBucket: "registro-tickets-d9a1d.firebasestorage.app",
+    messagingSenderId: "522369475080",
+    appId: "1:522369475080:web:c1072784351ccb202ea7bd"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const colRef = collection(db, 'pedidos');
+
+  const fmtVal = v => v > 0
+    ? 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+    : '—';
+
+  const getVal = id => parseFloat(document.getElementById(id).value) || 0;
+  const numInputs = ['visaDeb','visaCred','masterDeb','masterCred','ticket','pix','dinheiro'];
+
+  (function(){
+    const today = new Date();
+    document.getElementById('pedidoData').value = today.toISOString().split('T')[0];
+    document.getElementById('todayDate').textContent = today.toLocaleDateString('pt-BR');
+  })();
+
+  numInputs.forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
+
+  function updatePreview() {
+    const total = numInputs.reduce((s, id) => s + getVal(id), 0);
+    document.getElementById('totalPreview').textContent =
+      'R$ ' + total.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  window.registrarPedido = async function() {
+    const btn = document.querySelector('.btn-register');
+    btn.disabled = true;
+    btn.textContent = '⏳ Salvando...';
+
+    const nome = document.getElementById('pedidoNome').value.trim() || 'Sem identificação';
+    const data = document.getElementById('pedidoData').value;
+    const values = {
+      visaDeb:    getVal('visaDeb'),
+      visaCred:   getVal('visaCred'),
+      masterDeb:  getVal('masterDeb'),
+      masterCred: getVal('masterCred'),
+      ticket:     getVal('ticket'),
+      pix:        getVal('pix'),
+      dinheiro:   getVal('dinheiro'),
+    };
+    const total = Object.values(values).reduce((a, b) => a + b, 0);
+
+    try {
+      await addDoc(colRef, {
+        nome, data,
+        dataFmt: data ? new Date(data + 'T12:00:00').toLocaleDateString('pt-BR') : '—',
+        ...values, total,
+        criadoEm: Date.now()
+      });
+      resetForm();
+      showToast('✅ Registro salvo na nuvem!', 'green');
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Erro ao salvar. Verifique o Firestore.', 'red');
+    }
+    btn.disabled = false;
+    btn.textContent = '➕ Registrar no Histórico';
+  };
+
+  const q = query(colRef, orderBy('criadoEm', 'asc'));
+  onSnapshot(q, (snapshot) => {
+    const tbody = document.getElementById('histBody');
+    tbody.innerHTML = '';
+    let grandAcc = 0;
+    let count = 0;
+
+    snapshot.forEach(docSnap => {
+      const reg = { id: docSnap.id, ...docSnap.data() };
+      grandAcc += reg.total || 0;
+      count++;
+      renderRow(reg, tbody);
+    });
+
+    document.getElementById('countBadge').textContent = count + (count === 1 ? ' registro' : ' registros');
+    document.getElementById('emptyState').style.display = count === 0 ? 'block' : 'none';
+    document.getElementById('footerTotal').style.display = count === 0 ? 'none' : 'flex';
+    document.getElementById('grandTotal').textContent =
+      'R$ ' + grandAcc.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  });
+
+  function renderRow(reg, tbody) {
+    const tr = document.createElement('tr');
+    const cell = (v, isMoney, isTotal) => {
+      const td = document.createElement('td');
+      if (isTotal) { td.className = 'total-cell'; td.textContent = fmtVal(v); }
+      else if (isMoney) { td.className = 'val-cell' + (v > 0 ? ' has-value' : ''); td.textContent = fmtVal(v); }
+      else { td.textContent = v; td.className = 'pedido-name'; }
+      return td;
+    };
+    tr.appendChild(cell(reg.nome,       false, false));
+    tr.appendChild(cell(reg.dataFmt,    false, false));
+    tr.appendChild(cell(reg.visaDeb,    true,  false));
+    tr.appendChild(cell(reg.visaCred,   true,  false));
+    tr.appendChild(cell(reg.masterDeb,  true,  false));
+    tr.appendChild(cell(reg.masterCred, true,  false));
+    tr.appendChild(cell(reg.ticket,     true,  false));
+    tr.appendChild(cell(reg.pix,        true,  false));
+    tr.appendChild(cell(reg.dinheiro,   true,  false));
+    tr.appendChild(cell(reg.total,      true,  true));
+
+    tr.children[1].className = 'val-cell has-value';
+
+    const tdDel = document.createElement('td');
+    const btnDel = document.createElement('button');
+    btnDel.textContent = '🗑';
+    btnDel.title = 'Remover registro';
+    btnDel.style.cssText = 'background:transparent;border:1px solid #e05c5c55;color:#e05c5c;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;transition:all 0.15s;';
+    btnDel.onmouseover = () => btnDel.style.background = '#e05c5c22';
+    btnDel.onmouseout  = () => btnDel.style.background = 'transparent';
+    btnDel.onclick = () => deletarRegistro(reg.id, db, colRef, doc, deleteDoc);
+    tdDel.appendChild(btnDel);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  }
+
+  async function deletarRegistro(id, db, colRef, doc, deleteDoc) {
+    if (!confirm('Remover este registro do banco de dados?')) return;
+    try {
+      await deleteDoc(doc(db, 'pedidos', id));
+      showToast('🗑 Registro removido!', 'red');
+    } catch(e) { console.error(e); }
+  }
+
+  window.limparHistorico = async function() {
+    const tbody = document.getElementById('histBody');
+    if (tbody.rows.length === 0) return;
+    if (!confirm('Apagar TODOS os registros? Esta ação não pode ser desfeita.')) return;
+    const snapshot = await getDocs(colRef);
+    const promises = [];
+    snapshot.forEach(d => promises.push(deleteDoc(doc(db, 'pedidos', d.id))));
+    await Promise.all(promises);
+    showToast('🗑 Histórico apagado!', 'red');
+  };
+
+  function resetForm() {
+    document.getElementById('pedidoNome').value = '';
+    numInputs.forEach(id => document.getElementById(id).value = '');
+    document.getElementById('totalPreview').textContent = 'R$ 0,00';
+  }
+
+  function showToast(msg, color) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = color === 'red' ? 'var(--accent2)' : 'var(--green)';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
