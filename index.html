@@ -307,6 +307,23 @@
     color: var(--text);
   }
 
+
+  .btn-excel {
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .btn-excel:hover {
+    background: rgba(78,203,141,0.15);
+  }
   .btn-clear {
     background: transparent;
     border: 1px solid var(--border);
@@ -552,6 +569,7 @@
       <h2>Histórico de Registros</h2>
       <div style="display:flex;gap:10px;align-items:center;">
         <span class="count-badge" id="countBadge">0 registros</span>
+        <button class="btn-excel" onclick="exportarExcel()">📥 Exportar Excel</button>
         <button class="btn-clear" onclick="limparHistorico()">Limpar</button>
       </div>
     </div>
@@ -595,6 +613,7 @@
 <!-- TOAST -->
 <div class="toast" id="toast">✅ Registro adicionado!</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -675,11 +694,13 @@
     tbody.innerHTML = '';
     let grandAcc = 0;
     let count = 0;
+    window._registrosCache = [];
 
     snapshot.forEach(docSnap => {
       const reg = { id: docSnap.id, ...docSnap.data() };
       grandAcc += reg.total || 0;
       count++;
+      window._registrosCache.push(reg);
       renderRow(reg, tbody);
     });
 
@@ -734,6 +755,55 @@
     } catch(e) { console.error(e); }
   }
 
+
+  // ── Export to Excel ────────────────────────────────────
+  window.exportarExcel = function() {
+    if (!window._registrosCache || window._registrosCache.length === 0) {
+      showToast('⚠️ Nenhum registro para exportar!', 'red');
+      return;
+    }
+
+    const rows = window._registrosCache.map(r => ({
+      'Identificação': r.nome,
+      'Data': r.dataFmt,
+      'Visa Débito': r.visaDeb || 0,
+      'Visa Crédito': r.visaCred || 0,
+      'Master Débito': r.masterDeb || 0,
+      'Master Crédito': r.masterCred || 0,
+      'Ticket': r.ticket || 0,
+      'PIX': r.pix || 0,
+      'Dinheiro': r.dinheiro || 0,
+      'Total': r.total || 0
+    }));
+
+    // Add totals row
+    const totals = {
+      'Identificação': 'TOTAL GERAL',
+      'Data': '',
+      'Visa Débito':    rows.reduce((s,r) => s + r['Visa Débito'], 0),
+      'Visa Crédito':   rows.reduce((s,r) => s + r['Visa Crédito'], 0),
+      'Master Débito':  rows.reduce((s,r) => s + r['Master Débito'], 0),
+      'Master Crédito': rows.reduce((s,r) => s + r['Master Crédito'], 0),
+      'Ticket':         rows.reduce((s,r) => s + r['Ticket'], 0),
+      'PIX':            rows.reduce((s,r) => s + r['PIX'], 0),
+      'Dinheiro':       rows.reduce((s,r) => s + r['Dinheiro'], 0),
+      'Total':          rows.reduce((s,r) => s + r['Total'], 0),
+    };
+    rows.push(totals);
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
+
+    // Column widths
+    ws['!cols'] = [
+      {wch:22},{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:10},{wch:10},{wch:10},{wch:12}
+    ];
+
+    const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+    XLSX.writeFile(wb, `BotecoTickets_${hoje}.xlsx`);
+    showToast('📥 Excel exportado com sucesso!', 'green');
+  };
   window.limparHistorico = async function() {
     const tbody = document.getElementById('histBody');
     if (tbody.rows.length === 0) return;
